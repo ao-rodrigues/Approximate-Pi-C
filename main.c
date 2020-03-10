@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include<time.h>
+
+
+#define DEFAULT_NUM_THREADS 1
 
 void *calc_points_in_circle(void *thread_args);
 
@@ -17,13 +22,25 @@ typedef struct {
 
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        printf("Usage: ./approxPiPar <num_points> <num_threads>");
+    clock_t begin = clock();
+
+    bool plain_output = false;
+    g_num_threads = DEFAULT_NUM_THREADS;
+
+    if (argc < 2) {
+        printf("Usage: ./approxPiPar <num_points> <num_threads>(?) [* FLAGS]");
         return 0;
+    } else if (argc >= 3){
+        g_num_threads = (int) strtol(argv[2], (char **) NULL, 10);
+
+        if (argc == 4) {
+        // No argv comparisons just for simplicity
+            plain_output = true;
+        }
     }
 
+
     g_num_points = strtol(argv[1], (char **) NULL, 10);
-    g_num_threads = (int) strtol(argv[2], (char **) NULL, 10);
 
     pthread_t threads[g_num_threads];
     ThreadArgs thread_args[g_num_threads];
@@ -53,9 +70,18 @@ int main(int argc, char *argv[]) {
 
     pi_estimate = ((double) total_points_in_circle / (double) g_num_points) * 4.0;
 
-    printf("Total number of points: %ld\n", g_num_points);
-    printf("Points within circle: %ld\n", total_points_in_circle);
-    printf("Pi estimation: %.5f\n", pi_estimate);
+    clock_t end = clock();
+
+    if (plain_output) {
+        double run_time_millis = (double)(end - begin) * 1000.0 / CLOCKS_PER_SEC;
+        printf("%ld\t%ld\t%.2fms\n", g_num_points, g_num_threads, run_time_millis);
+    } else {
+        printf("Total number of points: %ld\n", g_num_points);
+        printf("Points within circle: %ld\n", total_points_in_circle);
+        printf("Pi estimation: %.5f\n", pi_estimate);
+
+    }
+
 
     return 0;
 }
